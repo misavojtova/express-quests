@@ -1,41 +1,23 @@
-const connection = require("./db-config");
-const { setupRoutes } = require("./routes");
-const express = require("express");
-const app = express();
+const connection = require("../db-config");
 const Joi = require("joi");
-
-const port = process.env.PORT || 3000;
-
-connection.connect((err) => {
-  if (err) {
-    console.error("error connecting: " + err.stack);
-  } else {
-    console.log("connected as id " + connection.threadId);
-  }
-});
-setupRoutes(app);
-
-app.use(express.json());
+const db = connection.promise();
 
 // TODO break the following routes handlers into model and controller
-app.get("/api/users", (req, res) => {
+// app.get("/api/users", (req, res)
+function findAllUsers(language) {
   let sql = "SELECT * FROM users";
   const sqlValues = [];
-  if (req.query.language) {
+
+  if (language) {
     sql += " WHERE language = ?";
-    sqlValues.push(req.query.language);
+    sqlValues.push(language);
   }
-  connection.query(sql, sqlValues, (err, results) => {
-    if (err) {
-      res.status(500).send("Error retrieving users from database");
-    } else {
-      res.json(results);
-    }
-  });
-});
+  return db.query(sql, sqlValues).then(([result]) => result);
+}
 
 app.get("/api/users/:id", (req, res) => {
   const userId = req.params.id;
+
   connection.query(
     "SELECT * FROM users WHERE id = ?",
     [userId],
@@ -136,6 +118,6 @@ app.delete("/api/users/:id", (req, res) => {
   );
 });
 
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
-});
+module.exports = {
+  findAllUsers,
+};
