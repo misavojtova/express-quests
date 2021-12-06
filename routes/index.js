@@ -1,3 +1,4 @@
 const userRoutes = require("./userRoutes");
-
-module.exports = { userRoutes };
+const moviesRoutes = require("./moviesRoutes");
+module.exports = { userRoutes, moviesRoutes };
+console.log();
