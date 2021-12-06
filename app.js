@@ -1,23 +1,18 @@
-const connection = require("./db-config");
-const { setupRoutes } = require("./routes");
 const express = require("express");
-const app = express();
-const Joi = require("joi");
+const { userRoutes } = require("./routes");
 
+const app = express();
+
+// const Joi = require("joi");
 const port = process.env.PORT || 3000;
 
-connection.connect((err) => {
-  if (err) {
-    console.error("error connecting: " + err.stack);
-  } else {
-    console.log("connected as id " + connection.threadId);
-  }
-});
-setupRoutes(app);
-
 app.use(express.json());
+app.use("/api/users", userRoutes);
+
+// userRoutes(app);
 
 // TODO break the following routes handlers into model and controller
+/*
 app.get("/api/users", (req, res) => {
   let sql = "SELECT * FROM users";
   const sqlValues = [];
@@ -50,33 +45,34 @@ app.get("/api/users/:id", (req, res) => {
   );
 });
 
-app.post("/api/users", (req, res) => {
+app.post('/api/users', (req, res) => {
   const { email } = req.body;
   const db = connection.promise();
   let validationErrors = null;
-  db.query("SELECT * FROM users WHERE email = ?", [email])
+  db.query('SELECT * FROM users WHERE email = ?', [email])
     .then(([result]) => {
-      if (result[0]) return Promise.reject("DUPLICATE_EMAIL");
+      if (result[0]) return Promise.reject('DUPLICATE_EMAIL');
       validationErrors = Joi.object({
         email: Joi.string().email().max(255).required(),
         firstname: Joi.string().max(255).required(),
         lastname: Joi.string().max(255).required(),
-        city: Joi.string().allow(null, "").max(255),
-        language: Joi.string().allow(null, "").max(255),
+        city: Joi.string().allow(null, '').max(255),
+        language: Joi.string().allow(null, '').max(255),
       }).validate(req.body, { abortEarly: false }).error;
-      if (validationErrors) return Promise.reject("INVALID_DATA");
-      return db.query("INSERT INTO users SET ?", [req.body]);
+      if (validationErrors) return Promise.reject('INVALID_DATA');
+      
+      return db.query('INSERT INTO users SET ?', [req.body]);
     })
     .then(([{ insertId }]) => {
       res.status(201).json({ id: insertId, ...req.body });
     })
     .catch((err) => {
       console.error(err);
-      if (err === "DUPLICATE_EMAIL")
-        res.status(409).json({ message: "This email is already used" });
-      else if (err === "INVALID_DATA")
+      if (err === 'DUPLICATE_EMAIL')
+        res.status(409).json({ message: 'This email is already used' });
+      else if (err === 'INVALID_DATA')
         res.status(422).json({ validationErrors });
-      else res.status(500).send("Error saving the user");
+      else res.status(500).send('Error saving the user');
     });
 });
 
@@ -135,6 +131,7 @@ app.delete("/api/users/:id", (req, res) => {
     }
   );
 });
+*/
 
 app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
