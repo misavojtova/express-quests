@@ -1,5 +1,6 @@
 const connection = require("../db-config");
 const db = connection.promise();
+const argon2 = require("argon2");
 
 connection.connect((err) => {
   if (err) {
@@ -41,7 +42,6 @@ function validEmail(email) {
   return db
     .query("SELECT * FROM users WHERE email = ?", [email])
     .then(([result]) => {
-      console.log("model", result[0]);
       result[0];
     })
     .catch((err) => {
@@ -56,12 +56,23 @@ const validEmailDifferId = (email, id) => {
     .then(([results]) => results[0]);
 };
 
-const insertUser = (data) => {
+const insertUser = ({
+  firstname,
+  lastname,
+  email,
+  city,
+  language,
+  hashedPassword,
+}) => {
   return db
-    .query("INSERT INTO users set ?", data)
+    .query(
+      "INSERT INTO users (firstname, lastname, email, city, language, hashedPassword ) VALUES (?, ?, ?, ?, ?, ?)",
+      [firstname, lastname, email, city, language, hashedPassword]
+    )
     .then(([result]) => {
+      console.log(result);
       const id = result.insertId;
-      return { ...data, id };
+      return { id, firstname, lastname, email, city, language };
     })
     .catch((err) => {
       console.log(err);
@@ -82,8 +93,24 @@ function deleteOneUser({ filters: { deleteId } }) {
       return err;
     });
 }
+const hashingOptions = {
+  type: argon2.argon2id,
+  memoryCost: 2 ** 16,
+  timeCost: 5,
+  parallelism: 1,
+};
+
+const hashPassword = (plainPassword) => {
+  return argon2.hash(plainPassword, hashingOptions);
+};
+
+const verifyPassword = (plainPassword, hashedPassword) => {
+  return argon2.verify(hashedPassword, plainPassword, hashingOptions);
+};
 
 module.exports = {
+  hashPassword,
+  verifyPassword,
   getAllUsers,
   getOneUser,
   deleteOneUser,

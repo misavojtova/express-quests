@@ -30,31 +30,51 @@ function getOneUserCon(req, res) {
 }
 
 function insertUserCon(req, res) {
-  const { email } = req.body;
+  const { firstname, lastname, email, city, language, hashedPassword } =
+    req.body;
 
+  console.log("password", hashedPassword);
   let validationErrors = null;
 
   userModel
     .validEmail(email)
     .then((result) => {
-      console.log("result", result);
       if (result) return Promise.reject("DUPLICATE_EMAIL");
-
       validationErrors = Joi.object({
-        email: Joi.string().email().max(255).required(),
         firstname: Joi.string().max(255).required(),
         lastname: Joi.string().max(255).required(),
+        email: Joi.string().email().max(255).required(),
         city: Joi.string().allow(null, "").max(255),
         language: Joi.string().allow(null, "").max(255),
+        hashedPassword: Joi.string(),
       }).validate(req.body, { abortEarly: false }).error;
 
       if (validationErrors) return Promise.reject("INVALID_DATA");
 
-      return userModel.insertUser(req.body);
-    })
-    .then((createdUser) => {
-      console.log("creatduser", createdUser);
-      res.status(201).json(createdUser);
+      userModel
+        .hashPassword(hashedPassword)
+        .then((hashedPassword) => {
+          console.log("hashed", hashedPassword);
+          console.log(
+            firstname,
+            lastname,
+            email,
+            city,
+            language,
+            hashedPassword
+          );
+          return userModel.insertUser({
+            firstname,
+            lastname,
+            email,
+            city,
+            language,
+            hashedPassword,
+          });
+        })
+        .then((createdUser) => {
+          res.status(201).json(createdUser);
+        });
     })
     .catch((err) => {
       console.error(err);
