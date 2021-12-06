@@ -30,10 +30,9 @@ function getOneUserCon(req, res) {
 }
 
 function insertUserCon(req, res) {
-  const { firstname, lastname, email, city, language, hashedPassword } =
-    req.body;
+  const { firstname, lastname, email, city, language, password } = req.body;
 
-  console.log("password", hashedPassword);
+  console.log("password", password);
   let validationErrors = null;
 
   userModel
@@ -46,13 +45,13 @@ function insertUserCon(req, res) {
         email: Joi.string().email().max(255).required(),
         city: Joi.string().allow(null, "").max(255),
         language: Joi.string().allow(null, "").max(255),
-        hashedPassword: Joi.string().min(8),
+        password: Joi.string().min(8),
       }).validate(req.body, { abortEarly: false }).error;
 
       if (validationErrors) return Promise.reject("INVALID_DATA");
 
       userModel
-        .hashPassword(hashedPassword)
+        .hashPassword(password)
         .then((hashedPassword) => {
           console.log("hashed", hashedPassword);
           console.log(
