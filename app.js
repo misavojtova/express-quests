@@ -1,6 +1,7 @@
 const express = require("express");
 const { userRoutes } = require("./routes");
 const { moviesRoutes } = require("./routes");
+const { checkCredentRoutes } = require("./routes");
 
 const app = express();
 
@@ -10,6 +11,7 @@ const port = process.env.PORT || 3000;
 app.use(express.json());
 app.use("/api/users", userRoutes);
 app.use("/api/movies", moviesRoutes);
+app.use("/api/auth", checkCredentRoutes);
 
 // userRoutes(app);
 

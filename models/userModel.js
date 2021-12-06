@@ -72,7 +72,7 @@ const insertUser = ({
     .then(([result]) => {
       console.log(result);
       const id = result.insertId;
-      return { id, firstname, lastname, email, city, language };
+      return { id, firstname, lastname, email, city, language, hashedPassword };
     })
     .catch((err) => {
       console.log(err);

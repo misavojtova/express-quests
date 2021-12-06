@@ -46,7 +46,7 @@ function insertUserCon(req, res) {
         email: Joi.string().email().max(255).required(),
         city: Joi.string().allow(null, "").max(255),
         language: Joi.string().allow(null, "").max(255),
-        hashedPassword: Joi.string(),
+        hashedPassword: Joi.string().min(8),
       }).validate(req.body, { abortEarly: false }).error;
 
       if (validationErrors) return Promise.reject("INVALID_DATA");

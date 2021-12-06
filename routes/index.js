@@ -1,4 +1,5 @@
 const userRoutes = require("./userRoutes");
 const moviesRoutes = require("./moviesRoutes");
-module.exports = { userRoutes, moviesRoutes };
-console.log();
+const checkCredentRoutes = require("./checkCredentRoutes");
+
+module.exports = { userRoutes, moviesRoutes, checkCredentRoutes };
