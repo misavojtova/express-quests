@@ -49,18 +49,25 @@ function validEmail(email) {
       return err;
     });
 }
-/*
+
 function findByToken(token) {
   return db
     .query("Select *  from users where token = ?", [token])
     .then(([result]) => {
-      result[0];
       console.log("result", result);
       console.log("result[0]", result[0]);
+      return result[0];
     })
     .catch((err) => console.log(err));
 }
-*/
+
+function getMoviesAccToUser(user_id) {
+  return db
+    .query("select * from movies where user_id = ?", [user_id])
+    .then(([result]) => result)
+    .catch((err) => console.log(err));
+}
+
 const validEmailDifferId = (email, id) => {
   return db
     .query("SELECT * FROM users WHERE email = ? AND id <> ?", [email, id])
@@ -131,7 +138,8 @@ const verifyPassword = (plainPassword, hashedPassword) => {
 };
 
 module.exports = {
-  // findByToken,
+  getMoviesAccToUser,
+  findByToken,
   hashPassword,
   verifyPassword,
   getAllUsers,

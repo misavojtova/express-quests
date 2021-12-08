@@ -7,13 +7,11 @@ function correctCredentCon(req, res) {
     userModel
       .verifyPassword(password, user[0].hashedPassword)
       .then((correctPassword) => {
-        console.log(correctPassword);
         if (correctPassword) {
           const token = calculateToken(email);
           userModel.updateUser(user[0].id, { token: token });
           res.cookie("user_token", token);
           res.status(200).send(correctPassword);
-          console.log("Cookies: ", req.cookies);
         } else res.status(401);
       })
       .catch((err) => console.log(err));

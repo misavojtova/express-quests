@@ -1,4 +1,18 @@
-const { moviesModel } = require("../models");
+const { moviesModel, userModel } = require("../models");
+
+function getMoviesAccToUserCon(req, res) {
+  const { user_token } = req.cookies;
+
+  userModel
+    .findByToken(user_token)
+    .then((user) => {
+      userModel
+        .getMoviesAccToUser(user.id)
+        .then((movies) => res.send(movies))
+        .catch(() => res.status(500).send("Error"));
+    })
+    .catch(() => res.status(401).send("Unauthorized access"));
+}
 
 function getAllMoviesCon(req, res) {
   const { max_duration, color } = req.query;
@@ -27,24 +41,32 @@ function getOneMovieCon(req, res) {
       res.status(500).send("Error retrieving movie from database");
     });
 }
-
+// Post
 function insertMovieCon(req, res) {
-  const error = moviesModel.validate(req.body);
-  if (error) {
-    res.status(422).json({ validationErrors: error.details });
-  } else {
-    moviesModel
-      .create(req.body)
-      .then((createdMovie) => {
-        res.status(201).json(createdMovie);
-      })
-      .catch((err) => {
-        console.error(err);
-        res.status(500).send("Error saving the movie");
-      });
-  }
+  userModel
+    .findByToken(req.cookies["user_token"])
+    .then((user) => {
+      console.log(user);
+      const error = moviesModel.validate(req.body);
+      if (error) {
+        res.status(422).json({ validationErrors: error.details });
+      } else {
+        moviesModel
+          .create(req.body)
+          .then((createdMovie) => {
+            res.status(201).json(createdMovie);
+          })
+          .catch((err) => {
+            console.error(err);
+            res.status(500).send("Error saving the movie");
+          });
+      }
+    })
+    .catch(() => {
+      res.status(401).send("Unauthorized user");
+    });
 }
-
+// Put
 function updateMovieCon(req, res) {
   let existingMovie = null;
   let validationErrors = null;
@@ -84,6 +106,7 @@ function deleteMovieCon(req, res) {
 }
 
 module.exports = {
+  getMoviesAccToUserCon,
   getAllMoviesCon,
   getOneMovieCon,
   deleteMovieCon,

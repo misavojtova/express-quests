@@ -9,6 +9,4 @@ const calculateToken = (userEmail = "") => {
     .digest("hex");
 };
 
-calculateToken("firstEmail@gmail.com");
-
 module.exports = { calculateToken };

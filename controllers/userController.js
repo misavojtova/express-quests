@@ -33,7 +33,6 @@ function getOneUserCon(req, res) {
 // Post
 function insertUserCon(req, res) {
   const { firstname, lastname, email, city, language, password } = req.body;
-
   let validationErrors = null;
 
   userModel
