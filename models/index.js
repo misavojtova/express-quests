@@ -1,5 +1,5 @@
 const userModel = require("./userModel");
 const moviesModel = require("./moviesModel");
-const checkCredentModel = require("./checkCredentModel");
+const authModel = require("./authModel");
 
-module.exports = { userModel, moviesModel, checkCredentModel };
+module.exports = { userModel, moviesModel, authModel };

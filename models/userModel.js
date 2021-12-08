@@ -49,7 +49,18 @@ function validEmail(email) {
       return err;
     });
 }
-
+/*
+function findByToken(token) {
+  return db
+    .query("Select *  from users where token = ?", [token])
+    .then(([result]) => {
+      result[0];
+      console.log("result", result);
+      console.log("result[0]", result[0]);
+    })
+    .catch((err) => console.log(err));
+}
+*/
 const validEmailDifferId = (email, id) => {
   return db
     .query("SELECT * FROM users WHERE email = ? AND id <> ?", [email, id])
@@ -63,16 +74,25 @@ const insertUser = ({
   city,
   language,
   hashedPassword,
+  token,
 }) => {
   return db
     .query(
-      "INSERT INTO users (firstname, lastname, email, city, language, hashedPassword ) VALUES (?, ?, ?, ?, ?, ?)",
-      [firstname, lastname, email, city, language, hashedPassword]
+      "INSERT INTO users (firstname, lastname, email, city, language, hashedPassword, token ) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [firstname, lastname, email, city, language, hashedPassword, token]
     )
     .then(([result]) => {
-      console.log(result);
       const id = result.insertId;
-      return { id, firstname, lastname, email, city, language, hashedPassword };
+      return {
+        id,
+        firstname,
+        lastname,
+        email,
+        city,
+        language,
+        hashedPassword,
+        token,
+      };
     })
     .catch((err) => {
       console.log(err);
@@ -80,8 +100,10 @@ const insertUser = ({
     });
 };
 
-const updateUser = (id, newAttributes) => {
-  return db.query("UPDATE users SET ? WHERE id = ?", [newAttributes, id]);
+const updateUser = (id, propertiesToUpdate) => {
+  return db
+    .query("UPDATE users SET ? WHERE id = ?", [propertiesToUpdate, id])
+    .catch((err) => console.log(err));
 };
 
 function deleteOneUser({ filters: { deleteId } }) {
@@ -109,6 +131,7 @@ const verifyPassword = (plainPassword, hashedPassword) => {
 };
 
 module.exports = {
+  // findByToken,
   hashPassword,
   verifyPassword,
   getAllUsers,

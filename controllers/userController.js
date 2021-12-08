@@ -1,5 +1,6 @@
 const { userModel } = require("../models");
 const Joi = require("joi");
+const { calculateToken } = require("../helpers/usersHelper");
 
 function getAllUsersCon(req, res) {
   const { language } = req.query;
@@ -29,10 +30,10 @@ function getOneUserCon(req, res) {
     });
 }
 
+// Post
 function insertUserCon(req, res) {
   const { firstname, lastname, email, city, language, password } = req.body;
 
-  console.log("password", password);
   let validationErrors = null;
 
   userModel
@@ -53,15 +54,7 @@ function insertUserCon(req, res) {
       userModel
         .hashPassword(password)
         .then((hashedPassword) => {
-          console.log("hashed", hashedPassword);
-          console.log(
-            firstname,
-            lastname,
-            email,
-            city,
-            language,
-            hashedPassword
-          );
+          const token = calculateToken(email);
           return userModel.insertUser({
             firstname,
             lastname,
@@ -69,6 +62,7 @@ function insertUserCon(req, res) {
             city,
             language,
             hashedPassword,
+            token,
           });
         })
         .then((createdUser) => {
@@ -85,17 +79,20 @@ function insertUserCon(req, res) {
     });
 }
 
+// Put
 function updateUserCon(req, res) {
   let existingUser = null;
   let validationErrors = null;
+  let propertiesToUpdate;
 
   Promise.all([
     userModel.getOneUser(req.params.id),
     userModel.validEmailDifferId(req.body.email, req.params.id),
   ])
-    .then(([existingUser, otherUserWithEmail]) => {
-      if (!existingUser) return Promise.reject("RECORD_NOT_FOUND");
+    .then(([existingUserFound, otherUserWithEmail]) => {
+      if (!existingUserFound) return Promise.reject("RECORD_NOT_FOUND");
       if (otherUserWithEmail) return Promise.reject("DUPLICATE_EMAIL");
+      existingUser = existingUserFound[0];
 
       validationErrors = Joi.object({
         email: Joi.string().email().max(255),
@@ -106,11 +103,13 @@ function updateUserCon(req, res) {
       }).validate(req.body, { abortEarly: false }).error;
 
       if (validationErrors) return Promise.reject("INVALID_DATA");
-
-      return userModel.updateUser(req.params.id, req.body);
+      const token = calculateToken(existingUser.email);
+      propertiesToUpdate = { ...req.body, token: token };
+      return userModel.updateUser(req.params.id, propertiesToUpdate);
     })
+
     .then(() => {
-      res.status(200).json({ ...existingUser, ...req.body });
+      res.status(200).json({ ...existingUser, ...propertiesToUpdate });
     })
     .catch((err) => {
       console.error(err);

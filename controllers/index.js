@@ -1,5 +1,5 @@
 const moviesController = require("./moviesController");
 const userController = require("./userController");
-const checkCredentController = require("./checkCredentController");
+const authController = require("./authController");
 
-module.exports = { userController, moviesController, checkCredentController };
+module.exports = { moviesController, userController, authController };

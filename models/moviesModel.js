@@ -1,93 +1,70 @@
 const connection = require("../db-config");
+const Joi = require("joi");
+
 const db = connection.promise();
 
-connection.connect((err) => {
-  if (err) {
-    console.error("error connecting: " + err.stack);
-  } else {
-    console.log("connected as id " + connection.threadId);
-  }
-});
+const validate = (data, forCreation = true) => {
+  const presence = forCreation ? "required" : "optional";
+  return Joi.object({
+    title: Joi.string().max(255).presence(presence),
+    director: Joi.string().max(255).presence(presence),
+    year: Joi.number().integer().min(1888).presence(presence),
+    color: Joi.boolean().presence(presence),
+    duration: Joi.number().integer().min(1).presence(presence),
+  }).validate(data, { abortEarly: false }).error;
+};
 
-const findMovies = async ({ filters: { color, max_duration } }) => {
+const findMany = ({ filters: { color, max_duration } }) => {
   let sql = "SELECT * FROM movies";
-  const sqlFilter = [];
+  const sqlValues = [];
 
   if (color) {
     sql += " WHERE color = ?";
-    sqlFilter.push(color);
+    sqlValues.push(color);
   }
   if (max_duration) {
-    if (color) sql += " AND duration <= ?";
+    if (color) sql += " AND duration <= ? ;";
     else sql += " WHERE duration <= ?";
-    sqlFilter.push(max_duration);
+
+    sqlValues.push(max_duration);
   }
 
-  console.log(sqlFilter);
-  try {
-    const rawResults = await db.query(sql, sqlFilter);
-    const [results] = rawResults;
-    return results;
-  } catch (error) {
-    console.log(error);
-    return error;
-  }
+  return db.query(sql, sqlValues).then(([results]) => results);
 };
 
-const findMovieById = async (movieId) => {
-  try {
-    const rawResults = await db.query("SELECT * FROM movies WHERE id = ?", [
-      movieId,
-    ]);
-    const [results] = rawResults;
-    return results;
-  } catch (error) {
-    console.log(error);
-    return error;
-  }
+const findOne = (id) => {
+  return db
+    .query("SELECT * FROM movies WHERE id = ?", [id])
+    .then(([results]) => results[0]);
 };
 
-const insertNewMovie = async (title, director, year, color, duration) => {
-  try {
-    const rawResult = await db.query(
-      "INSERT INTO movies(title, director, year, color, duration) VALUES (?, ?, ?, ?, ?)",
+const create = ({ title, director, year, color, duration }) => {
+  return db
+    .query(
+      "INSERT INTO movies (title, director, year, color, duration) VALUES (?, ?, ?, ?, ?)",
       [title, director, year, color, duration]
-    );
-    const [{ insertId }] = rawResult;
-    return insertId;
-  } catch (error) {
-    console.log(error);
-    return error;
-  }
+    )
+    .then(([result]) => {
+      const id = result.insertId;
+      return { id, title, director, year, color, duration };
+    });
 };
 
-const updateMovie = async (body, id) => {
-  try {
-    let [results] = await db.query("UPDATE movies SET ? WHERE id=?;", [
-      body,
-      id,
-    ]);
-    return results.changedRows;
-  } catch (error) {
-    console.log(error);
-    return error;
-  }
+const update = (id, newAttributes) => {
+  return db.query("UPDATE movies SET ? WHERE id = ?", [newAttributes, id]);
 };
 
-const deleteMovieById = async (id) => {
-  try {
-    let [results] = await db.query("DELETE FROM movies WHERE id = ?", [id]);
-    return results;
-  } catch (error) {
-    console.log(error);
-    return error;
-  }
+const destroy = (id) => {
+  return db
+    .query("DELETE FROM movies WHERE id = ?", [id])
+    .then(([result]) => result.affectedRows !== 0);
 };
 
 module.exports = {
-  findMovies,
-  findMovieById,
-  insertNewMovie,
-  updateMovie,
-  deleteMovieById,
+  findMany,
+  findOne,
+  validate,
+  create,
+  update,
+  destroy,
 };

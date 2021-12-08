@@ -1,16 +1,14 @@
 const express = require("express");
+// import the movie controller functions
 const { moviesController } = require("../controllers");
 
 const moviesRoutes = express.Router();
 
-moviesRoutes.get("/", moviesController.allMoviesController);
-
-moviesRoutes.get("/:id", moviesController.movieByIdController);
-
-moviesRoutes.post("/", moviesController.newMovieController);
-
-moviesRoutes.put("/:id", moviesController.updateMovieController);
-
-moviesRoutes.delete("/:id", moviesController.deleteMovieByIdController);
+// create moviesRoutes using express router
+moviesRoutes.get("/", moviesController.getAllMoviesCon);
+moviesRoutes.get("/:id", moviesController.getOneMovieCon);
+moviesRoutes.post("/", moviesController.insertMovieCon);
+moviesRoutes.put("/:id", moviesController.updateMovieCon);
+moviesRoutes.delete("/:id", moviesController.deleteMovieCon);
 
 module.exports = moviesRoutes;

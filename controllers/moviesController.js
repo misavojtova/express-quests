@@ -1,145 +1,92 @@
 const { moviesModel } = require("../models");
 
-const allMoviesController = async (req, res) => {
+function getAllMoviesCon(req, res) {
   const { max_duration, color } = req.query;
-  let movies = await moviesModel.findMovies({
-    filters: { max_duration, color },
-  });
-  if (movies.length > 0) res.status(200).json(movies);
-  else if (movies.length === 0)
-    res.status(404).send("No movies found with those specifications");
-  else res.status(500).send("No movies found");
-};
+  moviesModel
+    .findMany({ filters: { max_duration, color } })
+    .then((movies) => {
+      res.json(movies);
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).send("Error retrieving movies from database");
+    });
+}
 
-const movieByIdController = async (req, res) => {
-  const movieId = req.params.id;
-  let movie = await moviesModel.findMovieById(movieId);
-  if (movie.length > 0) res.status(200).json(movie[0]);
-  else if (movie.length === 0)
-    res.status(404).send("No movies found with that id");
-  else res.status(500).send("Error retrieving movies");
-};
+function getOneMovieCon(req, res) {
+  moviesModel
+    .findOne(req.params.id)
+    .then((movie) => {
+      if (movie) {
+        res.json(movie);
+      } else {
+        res.status(404).send("Movie not found");
+      }
+    })
+    .catch((err) => {
+      res.status(500).send("Error retrieving movie from database");
+    });
+}
 
-const newMovieController = async (req, res) => {
-  const { title, director, year, color, duration } = req.body;
-  let numericYear = parseInt(year);
-  let errors = [];
-
-  if (!title)
-    errors.push({ field: `title`, message: "This field is required" });
-  else if (title.length >= 255)
-    errors.push({
-      field: `title`,
-      message: "Should contain less than 255 alpha-numeric characters",
-    });
-  if (!director)
-    errors.push({ field: `director`, message: "This field is required" });
-  else if (director.length >= 255)
-    errors.push({
-      field: `director`,
-      message: "Should contain less than 255 alpha-numeric characters",
-    });
-  if (!year) errors.push({ field: `year`, message: "This field is required" });
-  else if (isNaN(year) || numericYear <= 1887)
-    errors.push({
-      field: `year`,
-      message:
-        "This field needs to be a string with numeric value bigger than 1887",
-    });
-  if (!duration)
-    errors.push({ field: `duration`, message: "This field is required" });
-  else if (duration <= 0)
-    errors.push({
-      field: `duration`,
-      message: "This field needs to be bigger than 0",
-    });
-  if (!color || color > 1)
-    errors.push({
-      field: "color",
-      message: `Required with value of true or false (1 or 0)`,
-    });
-
-  if (errors.length) res.status(422).json({ validationErrors: errors });
-  else {
-    let insertId = await moviesModel.insertNewMovie(
-      title,
-      director,
-      year,
-      color,
-      duration
-    );
-    if (insertId)
-      res
-        .status(201)
-        .json({ id: insertId, title, director, year, color, duration });
-    else res.status(500).send("Error saving the movie");
+function insertMovieCon(req, res) {
+  const error = moviesModel.validate(req.body);
+  if (error) {
+    res.status(422).json({ validationErrors: error.details });
+  } else {
+    moviesModel
+      .create(req.body)
+      .then((createdMovie) => {
+        res.status(201).json(createdMovie);
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error saving the movie");
+      });
   }
-};
+}
 
-const updateMovieController = async (req, res) => {
-  const { title, director, year, color, duration } = req.body;
-  let numericYear = parseInt(year);
-  const movieId = req.params.id;
-  let errors = [];
-  let existingMovie;
+function updateMovieCon(req, res) {
+  let existingMovie = null;
+  let validationErrors = null;
+  moviesModel
+    .findOne(req.params.id)
+    .then((movie) => {
+      existingMovie = movie;
+      if (!existingMovie) return Promise.reject("RECORD_NOT_FOUND");
+      validationErrors = moviesModel.validate(req.body, false);
+      if (validationErrors) return Promise.reject("INVALID_DATA");
+      return moviesModel.update(req.params.id, req.body);
+    })
+    .then(() => {
+      res.status(200).json({ ...existingMovie, ...req.body });
+    })
+    .catch((err) => {
+      console.error(err);
+      if (err === "RECORD_NOT_FOUND")
+        res.status(404).send(`Movie with id ${req.params.id} not found.`);
+      else if (err === "INVALID_DATA")
+        res.status(422).json({ validationErrors: validationErrors.details });
+      else res.status(500).send("Error updating a movie.");
+    });
+}
 
-  let movie = await moviesModel.findMovieById(movieId);
-  if (movie.length > 0) {
-    existingMovie = movie[0];
+function deleteMovieCon(req, res) {
+  moviesModel
+    .destroy(req.params.id)
+    .then((deleted) => {
+      if (deleted) res.status(200).send("🎉 Movie deleted!");
+      else res.status(404).send("Movie not found");
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).send("Error deleting a movie");
+    });
+}
 
-    if (title && title.length >= 255)
-      errors.push({
-        field: `title`,
-        message: "Should contain less than 255 alpha-numeric characters",
-      });
-    if (director && director.length >= 255)
-      errors.push({
-        field: `director`,
-        message: "Should contain less than 255 alpha-numeric characters",
-      });
-    if (year && (isNaN(year) || numericYear <= 1887))
-      errors.push({
-        field: `year`,
-        message: "This field needs to be a number bigger than 1887",
-      });
-    if (duration && duration <= 0)
-      errors.push({
-        field: `duration`,
-        message: "This field needs to be a number bigger than 0",
-      });
-    if (color && color > 1)
-      errors.push({
-        field: "color",
-        message: `Required with value of true or false (1 or 0)`,
-      });
-
-    if (errors.length) res.status(422).json({ validationErrors: errors });
-    else {
-      let movieToUpdate = await moviesModel.updateMovie(req.body, movieId);
-      if (movieToUpdate === 1)
-        res.status(200).json({ ...existingMovie, ...req.body });
-      else res.status(500).send("Error updating movie");
-    }
-  } else if (movie.length === 0)
-    res.status(404).send("No movies found with that id");
-  else res.status(500).send("Error retrieving movies");
-};
-
-const deleteMovieByIdController = async (req, res) => {
-  const movieId = req.params.id;
-
-  let deletedMovie = await moviesModel.deleteMovieById(movieId);
-
-  if (deletedMovie.affectedRows === 1)
-    res.status(200).send("🎉 Movie deleted!");
-  else if (deletedMovie.affectedRows === 0)
-    res.status(404).send(`Movie with id ${movieId} not found.`);
-  else res.status(500).send("😱 Error deleting movie");
-};
 module.exports = {
-  allMoviesController,
-  movieByIdController,
-  newMovieController,
-  updateMovieController,
-  deleteMovieByIdController,
+  getAllMoviesCon,
+  getOneMovieCon,
+  deleteMovieCon,
+  updateMovieCon,
+  insertMovieCon,
 };
