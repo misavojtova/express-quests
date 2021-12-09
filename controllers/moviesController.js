@@ -1,5 +1,18 @@
 const { moviesModel, userModel } = require("../models");
 
+function getAllMoviesCon(req, res) {
+  const { max_duration, color } = req.query;
+  moviesModel
+    .findMany({ filters: { max_duration, color } })
+    .then((movies) => {
+      res.json(movies);
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).send("Error retrieving movies from database");
+    });
+}
+
 function getMoviesAccToUserCon(req, res) {
   const { user_token } = req.cookies;
 
@@ -12,19 +25,6 @@ function getMoviesAccToUserCon(req, res) {
         .catch(() => res.status(500).send("Error"));
     })
     .catch(() => res.status(401).send("Unauthorized access"));
-}
-
-function getAllMoviesCon(req, res) {
-  const { max_duration, color } = req.query;
-  moviesModel
-    .findMany({ filters: { max_duration, color } })
-    .then((movies) => {
-      res.json(movies);
-    })
-    .catch((err) => {
-      console.log(err);
-      res.status(500).send("Error retrieving movies from database");
-    });
 }
 
 function getOneMovieCon(req, res) {
@@ -43,10 +43,7 @@ function getOneMovieCon(req, res) {
 }
 // Post
 function insertMovieCon(req, res) {
-  userModel
-    .findByToken(req.cookies["user_token"])
-    .then((user) => {
-      console.log(user);
+  
       const error = moviesModel.validate(req.body);
       if (error) {
         res.status(422).json({ validationErrors: error.details });

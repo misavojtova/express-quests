@@ -42,7 +42,7 @@ function validEmail(email) {
   return db
     .query("SELECT * FROM users WHERE email = ?", [email])
     .then(([result]) => {
-      result[0];
+      return result[0];
     })
     .catch((err) => {
       console.log(err);

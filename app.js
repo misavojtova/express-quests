@@ -1,12 +1,12 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
+
 const { userRoutes } = require("./routes");
 const { moviesRoutes } = require("./routes");
 const { authRoutes } = require("./routes");
 
 const app = express();
 
-// const Joi = require("joi");
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
