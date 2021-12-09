@@ -1,4 +1,14 @@
 const { moviesModel, userModel } = require("../models");
+const { decodeToken } = require("../helpers/usersHelper");
+
+function getMoviesAccToUserCon(req, res) {
+  const { user_token } = req.cookies;
+  const token = decodeToken(user_token);
+  userModel
+    .getMoviesAccToUser(token.user_id)
+    .then((movies) => res.send(movies))
+    .catch(() => res.status(500).send("Error"));
+}
 
 function getAllMoviesCon(req, res) {
   const { max_duration, color } = req.query;
@@ -11,20 +21,6 @@ function getAllMoviesCon(req, res) {
       console.log(err);
       res.status(500).send("Error retrieving movies from database");
     });
-}
-
-function getMoviesAccToUserCon(req, res) {
-  const { user_token } = req.cookies;
-
-  userModel
-    .findByToken(user_token)
-    .then((user) => {
-      userModel
-        .getMoviesAccToUser(user.id)
-        .then((movies) => res.send(movies))
-        .catch(() => res.status(500).send("Error"));
-    })
-    .catch(() => res.status(401).send("Unauthorized access"));
 }
 
 function getOneMovieCon(req, res) {
@@ -43,26 +39,25 @@ function getOneMovieCon(req, res) {
 }
 // Post
 function insertMovieCon(req, res) {
-  
-      const error = moviesModel.validate(req.body);
-      if (error) {
-        res.status(422).json({ validationErrors: error.details });
-      } else {
-        moviesModel
-          .create(req.body)
-          .then((createdMovie) => {
-            res.status(201).json(createdMovie);
-          })
-          .catch((err) => {
-            console.error(err);
-            res.status(500).send("Error saving the movie");
-          });
-      }
-    })
-    .catch(() => {
-      res.status(401).send("Unauthorized user");
-    });
+  const error = moviesModel.validate(req.body);
+  if (error) {
+    res.status(422).json({ validationErrors: error.details });
+  } else {
+    const { user_token } = req.cookies;
+    const token = decodeToken(user_token);
+
+    moviesModel
+      .create({ ...req.body, user_id: token.user_id })
+      .then((createdMovie) => {
+        res.status(201).json(createdMovie);
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error saving the movie");
+      });
+  }
 }
+
 // Put
 function updateMovieCon(req, res) {
   let existingMovie = null;

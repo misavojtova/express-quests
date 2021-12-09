@@ -53,7 +53,6 @@ function insertUserCon(req, res) {
       userModel
         .hashPassword(password)
         .then((hashedPassword) => {
-          const token = calculateToken(email);
           return userModel.insertUser({
             firstname,
             lastname,
@@ -61,7 +60,6 @@ function insertUserCon(req, res) {
             city,
             language,
             hashedPassword,
-            token,
           });
         })
         .then((createdUser) => {

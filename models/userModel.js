@@ -50,17 +50,6 @@ function validEmail(email) {
     });
 }
 
-function findByToken(token) {
-  return db
-    .query("Select *  from users where token = ?", [token])
-    .then(([result]) => {
-      console.log("result", result);
-      console.log("result[0]", result[0]);
-      return result[0];
-    })
-    .catch((err) => console.log(err));
-}
-
 function getMoviesAccToUser(user_id) {
   return db
     .query("select * from movies where user_id = ?", [user_id])
@@ -81,12 +70,11 @@ const insertUser = ({
   city,
   language,
   hashedPassword,
-  token,
 }) => {
   return db
     .query(
-      "INSERT INTO users (firstname, lastname, email, city, language, hashedPassword, token ) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [firstname, lastname, email, city, language, hashedPassword, token]
+      "INSERT INTO users (firstname, lastname, email, city, language, hashedPassword) VALUES (?, ?, ?, ?, ?, ?)",
+      [firstname, lastname, email, city, language, hashedPassword]
     )
     .then(([result]) => {
       const id = result.insertId;
@@ -98,7 +86,6 @@ const insertUser = ({
         city,
         language,
         hashedPassword,
-        token,
       };
     })
     .catch((err) => {
@@ -139,7 +126,6 @@ const verifyPassword = (plainPassword, hashedPassword) => {
 
 module.exports = {
   getMoviesAccToUser,
-  findByToken,
   hashPassword,
   verifyPassword,
   getAllUsers,

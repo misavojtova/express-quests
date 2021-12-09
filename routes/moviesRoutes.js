@@ -5,8 +5,8 @@ const { moviesController } = require("../controllers");
 const moviesRoutes = express.Router();
 
 // create moviesRoutes using express router
-// moviesRoutes.get("/", moviesController.getMoviesAccToUserCon);
-moviesRoutes.get("/", moviesController.getAllMoviesCon);
+moviesRoutes.get("/", moviesController.getMoviesAccToUserCon);
+// moviesRoutes.get("/", moviesController.getAllMoviesCon);
 moviesRoutes.get("/:id", moviesController.getOneMovieCon);
 moviesRoutes.post("/", moviesController.insertMovieCon);
 moviesRoutes.put("/:id", moviesController.updateMovieCon);
